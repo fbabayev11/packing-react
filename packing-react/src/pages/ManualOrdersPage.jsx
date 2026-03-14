@@ -28,6 +28,15 @@ function loadLocal() {
 function saveLocal(data) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
 }
+function nextOrderNum(orders) {
+  const nums = orders
+    .map(o => o.orderNum)
+    .filter(Boolean)
+    .map(n => parseInt(n.replace('M','')))
+    .filter(n => !isNaN(n))
+  const max = nums.length ? Math.max(...nums) : 0
+  return 'M' + String(max + 1).padStart(3, '0')
+}
 function newId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6) }
 function todayStr() { return new Date().toISOString().slice(0,10) }
 
@@ -71,6 +80,7 @@ export default function ManualOrdersPage() {
 
     const order = {
       id: editId || newId(),
+      orderNum: editId ? orders.find(o=>o.id===editId)?.orderNum : nextOrderNum(orders),
       customer: customer.trim(),
       phone: phone.trim(),
       note: note.trim(),
@@ -210,6 +220,9 @@ export default function ManualOrdersPage() {
               <div style={{display:'flex',alignItems:'center',gap:12,padding:'14px 18px'}}>
                 <div style={{width:8,height:8,borderRadius:'50%',background:'#25d366',flexShrink:0,
                   boxShadow:'0 0 6px rgba(37,211,102,.6)'}}/>
+                <div style={{fontFamily:'var(--mono)',fontSize:13,fontWeight:600,color:'var(--accent)',minWidth:44}}>
+                  {o.orderNum||'—'}
+                </div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:14,fontWeight:700}}>{o.customer || 'Müştəri'}</div>
                   <div style={{fontSize:12,color:'var(--muted)',marginTop:2}}>
