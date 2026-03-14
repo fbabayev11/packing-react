@@ -1,12 +1,19 @@
 import { useState, useEffect, useMemo } from 'react'
 import { API } from '../config'
 import OrderCard from '../components/OrderCard'
+import ManualOrderCard from '../components/ManualOrderCard'
 import Calendar from '../components/Calendar'
 import StockFilter from '../components/StockFilter'
 import SortMenu from '../components/SortMenu'
 
+const MANUAL_KEY = 'manual_orders_v1'
+function loadManual() {
+  try { return JSON.parse(localStorage.getItem(MANUAL_KEY) || '[]') } catch { return [] }
+}
+
 export default function OrdersPage() {
-  const [orders, setOrders]     = useState([])
+  const [orders, setOrders]       = useState([])
+  const [manualOrders, setManualOrders] = useState([])
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState('')
   const [lastRef, setLastRef]   = useState('')
@@ -15,6 +22,10 @@ export default function OrdersPage() {
   const [noteOnly, setNoteOnly] = useState(false)
   const [sortMode, setSortMode] = useState('date-desc')
   const [excluded, setExcluded] = useState([])
+
+  function loadManualOrders() {
+    setManualOrders(loadManual().filter(o => !o.archived))
+  }
 
   async function load() {
     setLoading(true); setError('')
@@ -27,7 +38,7 @@ export default function OrdersPage() {
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load(); loadManualOrders() }, [])
   useEffect(() => {
     const id = setInterval(load, 120000)
     return () => clearInterval(id)
@@ -130,6 +141,20 @@ export default function OrdersPage() {
       ) : (
         <div className="orders-grid">
           {filtered.map(o => <OrderCard key={o.id} order={o} onArchive={archive} />)}
+          {manualOrders.length > 0 && (
+            <>
+              <div style={{display:'flex',alignItems:'center',gap:10,margin:'6px 0 2px'}}>
+                <div style={{flex:1,height:1,background:'var(--border)'}}/>
+                <span style={{fontSize:11,fontWeight:700,color:'var(--muted)',whiteSpace:'nowrap'}}>
+                  💬 WhatsApp ({manualOrders.length})
+                </span>
+                <div style={{flex:1,height:1,background:'var(--border)'}}/>
+              </div>
+              {manualOrders.map(o => (
+                <ManualOrderCard key={o.id} order={o} onRefresh={loadManualOrders} />
+              ))}
+            </>
+          )}
         </div>
       )}
     </>
